@@ -917,7 +917,7 @@ class View:
                                            command=self.updateGraphList, indicatoron=False)
         self.btnGraphMenu.grid(row=0, column=3, sticky="nsew")
 
-        self.btnEnvViewMenu = tk.Menubutton(self.mainWindow, text="Env Color",
+        self.btnEnvViewMenu = tk.Menubutton(self.mainWindow, text="Color",
                                             relief=tk.RAISED)  # TODO: add more? If so, make like other menus
 
         self.viewMenu = tk.Menu(self.btnEnvViewMenu, tearoff=0)
