@@ -19,6 +19,7 @@ def createNewLoan(lender, borrower, sugar, spice, time=None, transfer=True):
     hasSpice = borrower.env.getHasSpice()
     lender.lent.append((lender, borrower, sugar, spice, time))
 
+    # transfer means that goods are transferred from lender to borrower. It is False when the loan is created from another loan's default
     if transfer:
         lender.setSugar(lender.sugar - sugar, "loan")
         if hasSpice:
@@ -97,10 +98,14 @@ def updateHelper(disease, immuneSubstr):  # updates immuneSubstr to match diseas
         if immuneSubstr[i] != disease[i]:
             if immuneSubstr[i] == '0':
                 immuneSubstr[i] = '1'
-                return str(immuneSubstr)
+                return "".join(immuneSubstr)
             else:
                 immuneSubstr[i] = '0'
-                return str(immuneSubstr)
+                return "".join(immuneSubstr)
+
+
+def getDistance(x1, y1, x2, y2):
+    return int(math.floor(math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)))
 
 
 class Agent:
@@ -211,22 +216,22 @@ class Agent:
     def getSugar(self):
         return self.sugar
 
+    def getSpice(self):
+        return self.spice
+
     def setSugar(self, amount, reason=""):
         previousSugar = self.sugar
-        self.sugar = max(amount, 0 if self.env.hasLimitedLifespan() else .01)
+        self.sugar = max(amount, 0 if self.env.getHasLimitedLifespan() else .01)
         sugarLog_str = "sugar: " + str(previousSugar) + " -> " + str(self.sugar) + " (" + reason + ")"
         self.sugarLog.append(sugarLog_str)
         self.addLogEntry(sugarLog_str)
 
     def setSpice(self, amount, reason=""):
         previousSpice = self.spice
-        self.spice = max(amount, 0 if self.env.hasLimitedLifespan() else .01)
+        self.spice = max(amount, 0 if self.env.getHasLimitedLifespan() else .01)
         spiceLog_str = "spice: " + str(previousSpice) + " -> " + str(self.spice) + " (" + reason + ")"
         self.spiceLog.append(spiceLog_str)
         self.addLogEntry(spiceLog_str)
-
-    def getSpice(self):
-        return self.spice
 
     def setAge(self, maxAge):
         self.maxAge = maxAge
@@ -341,7 +346,10 @@ class Agent:
 
     def getRandomImmuneSystem(self):
         for i in range(self.env.getImmuneSystemLength()):
-            self.immuneSystem += str(random.randint(0, 1))  # TODO: test to see if this uses the same random seed
+            self.immuneSystem += str(random.randint(0, 1))
+
+    def isDiseased(self):
+        return len(self.diseases) > 0
 
     ''' 
     build common lists
@@ -349,13 +357,15 @@ class Agent:
 
     # build a list of available food locations
     def getFood(self):
-        food = [(x, self.y) for x in range(self.x - self.vision, self.x + self.vision + 2)
+        food = [(x, self.y) for x in range(self.x - self.vision, self.x + self.vision + 1)
                 if self.env.isLocationValid((x, self.y))
                 and self.env.isLocationFree((x, self.y))]
 
-        food.extend([(self.x, y) for y in range(self.y - self.vision, self.y + self.vision + 2)
+        food.extend([(self.x, y) for y in range(self.y - self.vision, self.y + self.vision + 1)
                      if self.env.isLocationValid((self.x, y))
                      and self.env.isLocationFree((self.x, y))])
+        random.shuffle(food)
+
         return food
 
     # build a list of possible neighbours for in neighbourhood
@@ -369,22 +379,59 @@ class Agent:
                               if self.env.isLocationValid((self.x, y))
                               and not self.env.isLocationFree((self.x, y))
                               and y != self.y])
+
+        random.shuffle(neighbourhood)
+
+        return neighbourhood
+
+    # build a list of neighbours within agent's vision range
+    def getVisionNeighbourhood(self):
+        neighbourhood = [self.env.getAgent((x, self.y)) for x in range(self.x - self.vision, self.x + self.vision + 1)
+                         if self.env.isLocationValid((x, self.y))
+                         and not self.env.isLocationFree((x, self.y))
+                         and x != self.x]
+
+        neighbourhood.extend(
+            [self.env.getAgent((self.x, y)) for y in range(self.y - self.vision, self.y + self.vision + 1)
+             if self.env.isLocationValid((self.x, y))
+             and not self.env.isLocationFree((self.x, y))
+             and y != self.y])
+
+        random.shuffle(neighbourhood)
+
         return neighbourhood
 
     # build a list of possible preys around
     def getPreys(self):
-        preys = [self.env.getAgent((x, self.y)) for x in range(self.x - self.vision, self.x + self.vision + 2)
+        preys = [self.env.getAgent((x, self.y)) for x in range(self.x - self.vision, self.x + self.vision + 1)
                  if self.env.isLocationValid((x, self.y))
                  and not self.env.isLocationFree((x, self.y))
                  and self.sugar > self.env.getAgent((x, self.y)).getSugar()
-                 and self.env.getAgent((x, self.y)).getTribe() != self.tribe]
+                 and self.env.getAgent((x, self.y)).getTribe() != self.getTribe()]
 
-        preys.extend([self.env.getAgent((self.x, y)) for y in range(self.y - self.vision, self.y + self.vision + 2)
+        preys.extend([self.env.getAgent((self.x, y)) for y in range(self.y - self.vision, self.y + self.vision + 1)
                       if self.env.isLocationValid((self.x, y))
                       and not self.env.isLocationFree((self.x, y))
                       and self.sugar > self.env.getAgent((self.x, y)).getSugar()
-                      and self.env.getAgent((self.x, y)).getTribe() != self.tribe])
+                      and self.env.getAgent((self.x, y)).getTribe() != self.getTribe()])
+
+        random.shuffle(preys)
+
         return preys
+
+    def getFoodWithCombat(self, prey_list):
+        preys = prey_list
+
+        food = self.getFood()
+        C0 = self.sugar - self.sugarMetabolism
+        food.extend([preyA.getLocation() for preyA, preyB in product(preys, preys)
+                     if preyA != preyB
+                     and preyB.getSugar() < (
+                             C0 + self.env.getSugarAmt(preyA.getLocation()) + min(self.env.getCombatAlpha(),
+                                                                                  preyA.getSugar()))])
+
+        random.shuffle(food)
+        return food
 
     ''' 
     rules
@@ -408,7 +455,7 @@ class Agent:
     If a potential borrower and a potential lender are neighbors then a loan is originated with a duration of d years at 
     the rate of r percent and the face value of the loan amount is transferred from the lender to the borrower
 
-    At the time of the loan due date, if the borrower has sufficient wealth to repay the lan then a transfer from the 
+    At the time of the loan due date, if the borrower has sufficient wealth to repay the loan then a transfer from the 
     borrower to the lender is made; else the borrower is required to pay back half of its wealth and a new loan is 
     originated for the remaining sum
 
@@ -439,17 +486,18 @@ class Agent:
             elif maxLendSugar >= sugarNeeded and maxLendSpice >= spiceNeeded:
                 createNewLoan(neighbour, self, sugarNeeded, spiceNeeded)
 
+    #  get the amount that an agent can lend, according to the book's rules
     def getPotentialLendAmt(self):
         if self.age > self.fertility[1]:
             return .5 * self.sugar, .5 * self.spice
 
         if self.age > self.fertility[0]:
             excessSugar = max(0, self.sugar - self.sugarCostForMating)
-            if self.env.getHasSpice():
+            if not self.env.getHasSpice():
+                return excessSugar, 0
+            else:
                 excessSpice = max(0, self.spice - self.spiceCostForMating)
                 return excessSugar, excessSpice
-            else:
-                return excessSugar, 0
         return 0, 0
 
     def checkLoans(self):
@@ -471,23 +519,25 @@ class Agent:
                 self.borrowed.remove(loan)
                 if not lender.isAlive():
                     continue
+
+                #  If their loan duration is up, they must pay back the loan unless they cant afford it
                 cantPay = False
-                mysugar, myspice = self.getSugar(), self.getSpice()
+                mySugar, mySpice = self.getSugar(), self.getSpice()
                 if self.getSugar() - sugarOwed < 0:
                     cantPay = True
                     self.addLogEntry("Agent in debt!")
-                    lender.setSugar(lender.getSugar() + mysugar * .5, "repayment, agent in debt")
-                    self.setSugar(mysugar * .5, "debt")
-                    sugarObligations += mysugar * .5
-                    sugarOwed -= mysugar * .5
+                    lender.setSugar(lender.getSugar() + mySugar * .5, "repayment, agent in debt")
+                    self.setSugar(mySugar * .5, "debt")
+                    sugarObligations += mySugar * .5
+                    sugarOwed -= mySugar * .5
 
                 if self.env.getHasSpice() and self.getSpice() - spiceOwed < 0:
                     cantPay = True
                     self.addLogEntry("Agent in debt!")
                     lender.setSugar(lender.getSpice() + self.getSpice() * .5, "repayment, agent in debt")
                     self.setSugar(self.getSpice() * .5, "debt")
-                    spiceObligations += myspice * .5
-                    spiceOwed -= myspice * .5
+                    spiceObligations += mySpice * .5
+                    spiceOwed -= mySpice * .5
 
                 if cantPay:
                     createNewLoan(lender, self, sugarOwed, spiceOwed, time=self.env.getLoanDuration(), transfer=False)
@@ -597,9 +647,6 @@ class Agent:
         # build a list of possible partners in neighbourhood
         neighbourhood = self.getNeighbourhood()
 
-        # randomize
-        random.shuffle(neighbourhood)
-
         # mate with (all) possible partners
         for neighbour in neighbourhood:
             # partner selection
@@ -693,7 +740,7 @@ class Agent:
         parent.addLogEntry(str("create child: " + str(childId)))
         self.addChildId(childId)
         parent.addChildId(childId)
-        return child
+        return parent, child
 
     """
     Concept: Fertility
@@ -748,22 +795,20 @@ class Agent:
         # build a list of available food locations
         food = self.getFood()
 
-        # randomize food locations
-        random.shuffle(food)
         locations = []
         food.append((self.x, self.y))
 
         if not self.env.getHasSpice():
             for (x, y) in food:
                 location = (x, y)
-                sugarCapacity = self.env.getSugarCapacity((x, y))
+                sugarCapacity = self.env.getSugarAmt((x, y))
                 distance = self.getManhattanDistance(x, y)  # Manhattan distance enough due to no diagonal
                 pollution = self.env.getPollutionAtLocation((x, y))
                 locations.append((location, sugarCapacity, distance, pollution))
 
             locations.sort(key=lambda x: x[2])
             if self.env.getHasPollution():
-                best_location = max(locations, key=lambda x: x[1] / (1 + x[3]))
+                best_location = max(locations, key=lambda x: x[1] / (1 + x[3]))  # sugar / 1 + pollution
 
             else:
                 best_location = max(locations, key=lambda x: x[1])
@@ -782,8 +827,8 @@ class Agent:
             for (x, y) in food:
                 welfare = self.getWelfare(x=x, y=y)
                 location = (x, y)
-                sugarCapacity = self.env.getSugarCapacity((x, y))
-                spiceCapacity = self.env.getSpiceCapacity((x, y))
+                sugarCapacity = self.env.getSugarAmt((x, y))
+                spiceCapacity = self.env.getSpiceAmt((x, y))
                 distance = self.getManhattanDistance(x, y)  # Manhattan distance enough due to no diagonal
                 locations.append((welfare, location, sugarCapacity, spiceCapacity, distance))
 
@@ -809,11 +854,17 @@ class Agent:
             self.y = newy
             self.addLogEntry(str("move: " + str(previousLocation) + " -> " + str((newx, newy))))
 
-        self.env.setSugarCapacity((self.x, self.y), 0)
-        self.env.setSpiceCapacity((self.x, self.y), 0)
+        self.env.setSugarAmt((self.x, self.y), 0)
+        self.env.setSpiceAmt((self.x, self.y), 0)
 
     def getManhattanDistance(self, x, y):
         return abs(self.x - x) + abs(self.y - y)
+
+    def getDaysToStarvation(self):
+        if not self.env.getHasSpice():
+            return self.sugar // self.sugarMetabolism
+        else:
+            return min(self.sugar // self.sugarMetabolism, self.spice // self.spiceMetabolism)
 
     """
     Concept: Trade
@@ -892,9 +943,6 @@ class Agent:
     This is extended further to be a useful function in computing trade and best location to move to.
     """
 
-    def getSugarWelfare(self, x=None, y=None):
-        m1 = self.sugarMetabolism
-
     def getWelfare(self, w1=None, w2=None, x=None, y=None):
         m1 = self.sugarMetabolism
         m2 = self.spiceMetabolism
@@ -904,8 +952,8 @@ class Agent:
             w2 = self.spice
 
         if x and y:
-            x1 = self.env.getSugarCapacity((x, y))
-            x2 = self.env.getSpiceCapacity((x, y))
+            x1 = self.env.getSugarAmt((x, y))
+            x2 = self.env.getSpiceAmt((x, y))
 
             w1 = self.sugar + x1
             w2 = self.spice + x2
@@ -923,9 +971,6 @@ class Agent:
             # follows from page 129 and 130 of the book "Growing Artificial Societies" by Epstein and Axtell
             sugarForesight = (w1 - self.foresight * m1) if w1 - self.foresight * m1 > 0 else 0
             spiceForesight = (w2 - self.foresight * m2) if w2 - self.foresight * m2 > 0 else 0
-
-            if not self.env.getHasSpice():
-                return sugarForesight ** (m1 / mt) if w1 > 0 else 0
 
             return sugarForesight ** (m1 / mt) * spiceForesight ** (m2 / mt) if w1 > 0 and w2 > 0 else 0
 
@@ -951,33 +996,11 @@ class Agent:
 
     Gather the resources at the site plus the minimum of a and the occupant's wealth, if the site was occupied
 
-    If the site was occupuied, then the former occupant is considered "killed" -- permanently removed from play"
+    If the site was occupied, then the former occupant is considered "killed" -- permanently removed from play"
     """
 
     def combat(self, alpha):
-        hasSpice = self.env.getHasSpice()
-
-        # build a list of available unoccupied food locations
-        food = self.getFood()
-
-        # build a list of potential preys
-        preys = self.getPreys()
-
-        # append to food safe preys (retaliation condition)
-        C0 = self.sugar - self.sugarMetabolism
-        if not hasSpice:
-            food.extend([preyA.getLocation() for preyA, preyB in product(preys, preys)
-                         if preyA != preyB
-                         and preyB.getSugar() < (
-                                 C0 + self.env.getCapacity(preyA.getLocation()) + min(alpha, preyA.getSugar()))])
-        else:
-            C1 = self.spice - self.spiceMetabolism
-            food.extend([preyA.getLocation() for preyA, preyB in product(preys, preys)
-                         if preyA != preyB
-                         and preyB.getSugar() < (
-                                 C0 + self.env.getCapacity(preyA.getLocation()) + min(alpha, preyA.getSugar()))
-                         and preyB.getSpice() < (
-                                 C1 + self.env.getCapacity(preyA.getLocation()) + min(alpha, preyA.getSpice()))])
+        food = self.getFoodWithCombat(self.getPreys())
 
         # randomize food locations
         random.shuffle(food)
@@ -986,10 +1009,10 @@ class Agent:
         move = False
         newx = self.x
         newy = self.y
-        best = self.env.getCapacity((self.x, self.y))
+        best = self.env.getSugarAmt((self.x, self.y))
         minDistance = 0
         for (x, y) in food:
-            capacity = self.env.getCapacity((x, y))
+            capacity = self.env.getSugarAmt((x, y))
             agent = self.env.getAgent((x, y))
             if agent:
                 capacity += min(alpha, agent.getSugar())
@@ -1015,9 +1038,7 @@ class Agent:
 
         # collect, eat and consume
         self.setSugar(max(self.sugar + best, 0), "Move")
-        if hasSpice:
-            self.setSpice(max(self.spice + best, 0), "Move")
-        self.env.setCapacity((self.x, self.y), 0)
+        self.env.setSugarAmt((self.x, self.y), 0)
         return killed
 
     """
@@ -1060,6 +1081,7 @@ class Agent:
 
     def updateImmuneSystem(self):
         diseaseLength = self.env.getDiseaseLength()
+
         for disease, loc in list(self.diseases.items()):
             currentSubstr = self.immuneSystem[loc:loc + diseaseLength]
 
@@ -1068,7 +1090,7 @@ class Agent:
                 continue
 
             newSubstr = updateHelper(disease, currentSubstr)
-            self.immuneSystem.replace(currentSubstr, newSubstr, 1)
+            self.immuneSystem = self.immuneSystem.replace(currentSubstr, newSubstr, 1)
             hammingDist, loc = self.getHammingDistance(disease)
             self.diseases[disease] = loc
 

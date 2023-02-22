@@ -8,35 +8,51 @@ from itertools import product
 import random
 
 
-class Environment:
-    '''
-    classdocs
-    '''
+# helper function to calculate distance for the radial dispersion of sugar/spice
+def distance(di, dj):
+    return sqrt(di * di + dj * dj)
 
+
+class Environment:
     def __init__(self, size):
-        '''
-        Constructor
-        '''
+
         (width, height) = size
         self.gridWidth = width
         self.gridHeight = height
+        self.time = 0
+
         """
-        Grid is indexed by: [i][j][0] = sugar capacity (amt currently stored), [i][j][1] = spice capacity (amt currently stored), 
-        [i][j][2] = maxSugarCapacity, [i][j][3] = maxSpiceCapacity, [i][j][4] = agent, [i][j][5] = amount of pollution 
+        Grid is indexed by: 
+        [i][j][0] = sugar amount (amt currently at site), 
+        [i][j][1] = spice amount (amt currently at site) (if spice is not enabled, this is 0 everywhere)
+        [i][j][2] = max sugar capacity, 
+        [i][j][3] = max spice capacity (if spice is not enabled, this is 0 everywhere)
+        [i][j][4] = agent, 
+        [i][j][5] = amount of pollution (if pollution is not enabled, this is 0 everywhere)
         """
+
         self.grid = [[[0, 0, 0, 0, None, 0.0] for _ in range(width)] for _ in range(height)]
+
+        # these are set to True if the rule is enabled. They exist for easy reference by the agents
         self.hasSpice = False
         self.hasTags = False
+        self.hasDisease = False
+        self.hasPollution = False
+        self.hasForesight = False
+        self.hasLimitedLifespan = False
+        self.hasCombat = False
+        self.hasCredit = False
+
+        self.combatAlpha = None
+
         self.diseases = []
-        self.time = 0
+        self.immuneSystemSize = None
+        self.diseaseLength = None
+
         self.idIncrement = 0
         self.loanDuration = 0
         self.loanRate = 0
-        self.hasDisease = False
-        self.foresight = False
         self.foresightRange = 0, 0
-        self.limitedLifespan = True
-        self.hasPollution = False
         self.pA = 0
         self.pB = 0
         self.pDiffusionRate = 0
@@ -49,34 +65,46 @@ class Environment:
     def getHasTags(self):
         return self.hasTags
 
-    def setSugarCapacity(self, location, value):
+    def getHasCombat(self):
+        return self.hasCombat
+
+    def setHasCombat(self, hasCombat):
+        self.hasCombat = hasCombat
+
+    def getHasCredit(self):
+        return self.hasCredit
+
+    def setHasCredit(self, hasCredit):
+        self.hasCredit = hasCredit
+
+    def setSugarAmt(self, location, value):
         (i, j) = location
         self.grid[i][j][0] = value
 
-    def setSpiceCapacity(self, location, value):
+    def setSpiceAmt(self, location, value):
         (i, j) = location
         self.grid[i][j][1] = value
 
-    def getSugarCapacity(self, location):
+    def getSugarAmt(self, location):
         (i, j) = location
         return int(self.grid[i][j][0])
 
-    def getSpiceCapacity(self, location):
+    def getSpiceAmt(self, location):
         (i, j) = location
         return int(self.grid[i][j][1])
 
-    def decCapacity(self, location, value):
+    def decSugarAmt(self, location, value):
         (i, j) = location
         self.grid[i][j][0] = max(0, self.grid[i][j][2] - value)
 
-    def decSpiceCapacity(self, location, value):
+    def decSpiceAmt(self, location, value):
         (i, j) = location
         self.grid[i][j][1] = max(0, self.grid[i][j][3] - value)
 
     def addSiteHelper(self, location, maxCapacity, sugar):
         # calculate radial dispersion of capacity from maxCapacity to 0
         (si, sj, r) = location
-        distance = lambda di, dj: sqrt(di * di + dj * dj)
+
         D = distance(max(si, self.gridWidth - si), max(sj, self.gridHeight - sj)) * (r / float(self.gridWidth))
         for i, j in product(range(self.gridWidth), range(self.gridHeight)):
             c = min(1 + maxCapacity * (1 - distance(si - i, sj - j) / D), maxCapacity)
@@ -136,9 +164,9 @@ class Environment:
         # build a list of free locations i.e. where env.getAgent(x,y) == None
         # we don't use a global list and we re-build the list each time 
         # because init a new agent is much less frequent than updating agent's position (that would require append / remove to the global list)
-        (xmin, xmax, ymin, ymax) = location
-        freeLocations = [(i, j) for i, j in product(range(xmin, xmax), range(ymin, ymax)) if not self.grid[i][j][4]]
-        # return random free location if exist
+        (xMin, xMax, yMin, yMax) = location
+        freeLocations = [(i, j) for i, j in product(range(xMin, xMax), range(yMin, yMax)) if not self.grid[i][j][4]]
+        # return random free location if it exists
         if len(freeLocations) > 0:
             return freeLocations[random.randint(0, len(freeLocations) - 1)]
         return None
@@ -165,6 +193,7 @@ class Environment:
         self.idIncrement += 1
         return self.idIncrement
 
+    # used when getting children of agent, currently this only happens for inheritance
     def findAgentById(self, id):
         for i, j in product(range(self.gridWidth), range(self.gridHeight)):
             agent = self.grid[i][j][4]
@@ -200,10 +229,10 @@ class Environment:
         return self.hasDisease
 
     def setHasForesight(self, foresight):
-        self.foresight = foresight
+        self.hasForesight = foresight
 
     def getHasForesight(self):
-        return self.foresight
+        return self.hasForesight
 
     def setForesightRange(self, foresightRange):
         self.foresightRange = foresightRange
@@ -212,10 +241,29 @@ class Environment:
         return self.foresightRange
 
     def setHasLimitedLifespan(self, limitedLifespan):
-        self.limitedLifespan = limitedLifespan
+        self.hasLimitedLifespan = limitedLifespan
 
-    def hasLimitedLifespan(self):
-        return self.limitedLifespan
+    def getHasLimitedLifespan(self):
+        return self.hasLimitedLifespan
+
+    def setCombatAlpha(self, alpha):
+        self.combatAlpha = alpha
+
+    def getCombatAlpha(self):
+        return self.combatAlpha
+
+    def getNeighborhood(self, x, y):
+        neighbourhood = [self.getAgent((newX, y)) for newX in range(x - 1, x + 2)
+                         if self.isLocationValid((newX, y))
+                         and not self.isLocationFree((newX, y))]
+
+        neighbourhood.extend([self.getAgent((x, newY)) for newY in range(y - 1, y + 2)
+                              if self.isLocationValid((x, newY))
+                              and not self.isLocationFree((x, newY))])
+
+        random.shuffle(neighbourhood)
+
+        return neighbourhood
 
     """
         Concept: Pollution
@@ -235,7 +283,7 @@ class Environment:
         D_a: "Each a time periods and at each site, compute the pollution flux -- the average pollution level over all 
         von Neumann neighboring sites; Each site's flux becomes its new pollution level"
         
-        """
+    """
 
     def setPollutionRules(self, pA, pB, pDiffusionRate, pollutionStartTime, diffusionStartTime):
         self.hasPollution = True
