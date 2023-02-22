@@ -16,7 +16,7 @@
     "foresight": false,
     "credit": false,
     "inheritance": false,
-    "disease": false,
+    "disease": false
   },
 
   "rule_params": {
