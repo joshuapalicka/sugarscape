@@ -1268,7 +1268,6 @@ class View:
         self.btnGraphMenu.grid(row=0, column=3, sticky="nsew")
 
         self.btnEnvViewMenu = tk.Menubutton(self.mainWindow, text="Env Color",
-                                            relief=tk.RAISED)
 
         self.viewMenu = tk.Menu(self.btnEnvViewMenu, tearoff=0)
 
