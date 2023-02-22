@@ -17,7 +17,6 @@
     "credit": false,
     "inheritance": false,
     "disease": false,
-    "utilicalc": true
   },
 
   "rule_params": {
@@ -65,9 +64,6 @@
     "foresight": {
       "range_start": 0,
       "range_end": 10
-    },
-    "utilicalc": {
-      "self_interest_scale": null
     }
   },
 

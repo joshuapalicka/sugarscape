@@ -59,8 +59,6 @@ class Environment:
         self.pollutionStartTime = 0
         self.diffusionStartTime = 0
 
-        self.selfInterestScale = None
-
     def getHasSpice(self):
         return self.hasSpice
 
@@ -253,12 +251,6 @@ class Environment:
 
     def getCombatAlpha(self):
         return self.combatAlpha
-
-    def setSelfInterestScale(self, selfInterestScale):
-        self.selfInterestScale = selfInterestScale
-
-    def getSelfInterestScale(self):
-        return self.selfInterestScale
 
     def getNeighborhood(self, x, y):
         neighbourhood = [self.getAgent((newX, y)) for newX in range(x - 1, x + 2)

@@ -111,8 +111,6 @@ diseaseLength = rule_params["disease"]["disease_length"]  # number of bits per d
 numDiseases = rule_params["disease"]["num_diseases"]
 numStartingDiseases = rule_params["disease"]["num_starting_diseases"]
 
-selfInterestScale = rule_params["utilicalc"]["self_interest_scale"]
-
 createLogFileOnExit = settings["view"]["create_log_on_exit"]
 
 rules = settings["rules"]
@@ -179,8 +177,6 @@ def ruleCheck():
     if rules["moveEat"]:
         if rules["combat"]:
             raise ConflictingRuleException("moveEat", "combat")
-        if rules["utilicalc"]:
-            raise ConflictingRuleException("moveEat", "utilicalc")
 
     if rules["combat"]:
         if not rules["tags"]:
@@ -512,14 +508,8 @@ class View:
             if rules["moveEat"]:
                 agent.move()
 
-            if rules["utilicalc"]:
-                killed = agent.utilicalcMove()
-                if killed:
-                    self.appendToLog("Agent " + str(agent.getId()) + " killed " + str(killed.getId()), indent="    ")
-                    self.removeAgent(killed)
-
             # COMBAT
-            if rules["combat"] and not rules["utilicalc"]:
+            if rules["combat"]:
                 killed = agent.combat(combatAlpha)
                 # if an agent has been killed, remove it
                 if killed:
@@ -1493,9 +1483,6 @@ if __name__ == '__main__':
                     for _ in range(numStartingDiseases):
                         newAgent.addRandomDisease()
                 agentList.append(newAgent)
-
-    if rules["utilicalc"]:
-        env.setSelfInterestScale(selfInterestScale)
 
     # Create a view with an env and a list of agents in env
     view = View(screenSize, env, agentList)
