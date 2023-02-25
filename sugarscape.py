@@ -105,7 +105,7 @@ tags1 = 2 ** tagsLength - 1
 loanRate = rule_params["loans"]["rate"]
 loanDuration = rule_params["loans"]["duration"]
 
-# There exists 2^(diseaseLength) unique diseases and 2^immuneSystemSize unique immune systems
+# There exists 2^diseaseLength unique diseases and 2^immuneSystemSize unique immune systems
 immuneSystemSize = rule_params["disease"]["immune_system_size"]  # number of bits per immune system
 diseaseLength = rule_params["disease"]["disease_length"]  # number of bits per disease
 numDiseases = rule_params["disease"]["num_diseases"]
