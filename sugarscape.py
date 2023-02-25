@@ -29,8 +29,7 @@ with open('settings.json') as settings_file:
 # view
 screenSize = settings["view"]["screen_size"]["x"], settings["view"]["screen_size"]["y"]
 gridSize = settings["view"]["grid_size"]["x"], settings["view"]["grid_size"]["y"]
-colorBackground = settings["view"]["background_colors"]["R"], settings["view"]["background_colors"]["G"], \
-                  settings["view"]["background_colors"]["B"]
+
 graphUpdateFrequency = settings["view"]["graph_update_frequency"]  # graphs update every graphUpdateFrequency frames
 
 # display colors - can be changed here and will update in the GUI
