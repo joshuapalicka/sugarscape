@@ -454,7 +454,8 @@ class View:
         self.agentViewOptions = None
 
     # Maps the agent color scheme number to which function determines the color of each agent
-    agentColorSchemes = {0: colorAllRed, 1: colorBySex, 2: colorBySugarMetabolism, 3: colorByVision, 4: colorByGroup, 5: colorByAge, 6: colorByWealth,
+    agentColorSchemes = {0: colorAllRed, 1: colorBySex, 2: colorBySugarMetabolism, 3: colorByVision, 4: colorByGroup,
+                         5: colorByAge, 6: colorByWealth,
                          7: colorBySpiceMetabolism, 8: colorByNumberOfDiseases}
 
     # replace or remove agent, and determine if it's necessary to split wealth to children
@@ -528,7 +529,8 @@ class View:
                         # if a new baby is born, append it to the agents' list
                         parent, babyAgent = next(mateItr)
                         self.agents.append(babyAgent)
-                        self.appendToLog("Agent " + str(agent.getId()) + " mated with agent " + str(parent.getId()) + " and created agent " + str(babyAgent.getId()), indent="    ")
+                        self.appendToLog("Agent " + str(agent.getId()) + " mated with agent " + str(
+                            parent.getId()) + " and created agent " + str(babyAgent.getId()), indent="    ")
                     except StopIteration:
                         canMate = False
 
@@ -1204,6 +1206,7 @@ class View:
     def createLocationStatsWindow(self):
         if not self.locationStatsWindow:
             self.locationStatsWindow = tk.Tk()
+            self.locationStatsWindow.geometry("%dx%d" % (380, 665))
             self.buttonFrame = tk.Frame(self.locationStatsWindow)
 
             self.locationStatsWindow.option_add("*font", "Roboto 14")
@@ -1329,7 +1332,7 @@ class View:
                         len(self.agents))
 
                 print(consoleOutput)
-                self.appendToLog(consoleOutput, indent= "\n")
+                self.appendToLog(consoleOutput, indent="\n")
 
         self.mainWindow.update()
 
