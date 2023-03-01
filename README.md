@@ -5,6 +5,8 @@ In other words: Cellular Automata + Agents = Sugarscape.
 
 Code based on previous work by Hervé Lange: https://github.com/langerv/sugarscape
 
+This repository contains the base code that is being used in Sugarscape-Utilicalc, an implementation of Jeremy Bentham's Felicific Calculus in the Sugarscape, which can be found here: https://github.com/joshuapalicka/sugarscape-utilicalc
+
 ### Results
 
 ### Instructions
