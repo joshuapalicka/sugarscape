@@ -77,15 +77,15 @@ seasonRegions = {
 }
 
 growFactor = settings["env"]["growth_factor"]["grow_factor"]
-growFactorOnSeason = settings["env"]["growth_factor"]["grow_factor_on_season"]
-growFactorOffSeasonDivisor = settings["env"]["growth_factor"]["grow_factor_off_season_divisor"]
+growFactorOnSeason = rule_params["grow_factor_on_season"]
+growFactorOffSeasonDivisor = rule_params["grow_factor_off_season_divisor"]
 growFactorOffSeason = float(growFactorOnSeason) / growFactorOffSeasonDivisor
 
 # agents
 # agentColorScheme: Agents colour meaning = 0:all, 1:bySex, 2:byMetabolism, 3:byVision, 4:byGroup
 maxAgentMetabolism = settings["agents"]["max_agent_metabolism"]
 maxAgentVision = settings["agents"]["max_agent_vision"]
-initEndowment = settings["agents"]["initial_endowments"]["sugar"], settings["agents"]["initial_endowments"]["spice"]
+initEndowment = settings["agents"]["initial_endowments"]["min"], settings["agents"]["initial_endowments"]["max"]
 minmaxAgentAge = settings["agents"]["death_age_range"]["min"], settings["agents"]["death_age_range"]["max"]
 
 female = 0

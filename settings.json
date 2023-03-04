@@ -1,18 +1,18 @@
 {
   "rules": {
     "grow": true,
-    "seasons": false,
+    "seasons": true,
     "moveEat": true,
     "canStarve": true,
     "pollution": false,
     "tags": false,
     "combat": false,
-    "limitedLifespan": true,
-    "replacement": true,
-    "procreate": true,
+    "limitedLifespan": false,
+    "replacement": false,
+    "procreate": false,
     "transmit": false,
-    "spice": true,
-    "trade": true,
+    "spice": false,
+    "trade": false,
     "foresight": false,
     "credit": false,
     "inheritance": false,
@@ -20,6 +20,8 @@
   },
 
   "rule_params": {
+    "grow_factor_on_season": 1,
+    "grow_factor_off_season_divisor": 8,
     "seasons": {
       "period": 50,
       "regions": {
@@ -95,12 +97,12 @@
     "create_log_on_exit": true
   },
   "env": {
-    "is_random": true,
+    "is_random": false,
     "random_seed": 18,
 
     "total_agents": {
-      "blue": 100,
-      "red": 100
+      "blue": 125,
+      "red": 125
     },
     "agent_distributions": {
       "blue": {
@@ -141,17 +143,15 @@
     },
 
     "growth_factor": {
-      "grow_factor": 1,
-      "grow_factor_on_season": 1,
-      "grow_factor_off_season_divisor": 8
+      "grow_factor": 1
     }
   },
     "agents": {
       "max_agent_metabolism": 5,
       "max_agent_vision": 5,
       "initial_endowments": {
-        "sugar": 50,
-        "spice": 100
+        "min": 5,
+        "max": 25
       },
       "death_age_range": {
         "min": 60,
