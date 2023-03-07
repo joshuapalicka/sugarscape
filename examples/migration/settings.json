@@ -5,7 +5,7 @@
     "moveEat": true,
     "canStarve": true,
     "pollution": false,
-    "tags": false,
+    "tags": true,
     "combat": false,
     "limitedLifespan": false,
     "replacement": false,
@@ -16,7 +16,7 @@
     "foresight": false,
     "credit": false,
     "inheritance": false,
-    "disease": true
+    "disease": false
   },
 
   "rule_params": {
@@ -40,7 +40,7 @@
       }
     },
     "tags": {
-      "tags_length": 11,
+      "tags_length": 5,
       "tags0": 0,
       "randomly_distribute_agents": false
     },
@@ -52,15 +52,15 @@
       "duration": 10
     },
     "disease": {
-      "immune_system_size": 50,
-      "disease_length": 12,
-      "num_diseases": 25,
-      "num_starting_diseases": 10
+      "immune_system_size": 10,
+      "disease_length": 7,
+      "num_diseases": 8,
+      "num_starting_diseases": 2
     },
     "pollution": {
-      "A": 1,
-      "B": 1,
-      "diffusion_rate": 1,
+      "A": 0.1,
+      "B": 0.1,
+      "diffusion_rate": 5,
       "pollution_start_time": 50,
       "diffusion_start_time": 100
     },
@@ -102,15 +102,15 @@
     "random_seed": 18,
 
     "total_agents": {
-      "blue": 250,
-      "red": 250
+      "blue": 300,
+      "red": 0
     },
     "agent_distributions": {
       "blue": {
         "x_min": 0,
-        "x_max": 25,
-        "y_min": 25,
-        "y_max": 49
+        "x_max": 20,
+        "y_min": 30,
+        "y_max": 50
       },
       "red": {
         "x_min": 25,
@@ -144,15 +144,17 @@
     },
 
     "growth_factor": {
-      "grow_factor": 1
+      "grow_factor": 1,
+      "grow_factor_on_season": 1,
+      "grow_factor_off_season_divisor": 8
     }
   },
     "agents": {
       "max_agent_metabolism": 5,
-      "max_agent_vision": 8,
+      "max_agent_vision": 10,
       "initial_endowments": {
-        "min": 50,
-        "max": 100
+        "min": 5,
+        "max": 25
       },
       "death_age_range": {
         "min": 60,
@@ -162,14 +164,14 @@
         "male": {
           "min_start": 12,
           "max_start": 15,
-          "min_end": 50,
-          "max_end": 60
+          "min_end": 40,
+          "max_end": 50
         },
         "female": {
           "min_start": 12,
           "max_start": 15,
-          "min_end": 40,
-          "max_end": 50
+          "min_end": 50,
+          "max_end": 60
         }
       }
     }

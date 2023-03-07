@@ -809,7 +809,6 @@ class Agent:
             locations.sort(key=lambda x: x[2])
             if self.env.getHasPollution():
                 best_location = max(locations, key=lambda x: x[1] / (1 + x[3]))  # sugar / 1 + pollution
-
             else:
                 best_location = max(locations, key=lambda x: x[1])
 

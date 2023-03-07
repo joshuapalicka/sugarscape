@@ -77,8 +77,8 @@ seasonRegions = {
 }
 
 growFactor = settings["env"]["growth_factor"]["grow_factor"]
-growFactorOnSeason = rule_params["grow_factor_on_season"]
-growFactorOffSeasonDivisor = rule_params["grow_factor_off_season_divisor"]
+growFactorOnSeason = rule_params["seasons"]["grow_factor_on_season"]
+growFactorOffSeasonDivisor = rule_params["seasons"]["grow_factor_off_season_divisor"]
 growFactorOffSeason = float(growFactorOnSeason) / growFactorOffSeasonDivisor
 
 # agents
@@ -100,6 +100,7 @@ childbearing = fertility[0], fertility[1]  # female , male
 tagsLength = rule_params["tags"]["tags_length"]  # must be odd
 tags0 = rule_params["tags"]["tags0"]
 tags1 = 2 ** tagsLength - 1
+randomlyDistributeAgents = rule_params["tags"]["randomly_distribute_agents"]
 
 loanRate = rule_params["loans"]["rate"]
 loanDuration = rule_params["loans"]["duration"]
@@ -150,7 +151,7 @@ isRandom = settings["env"]["is_random"]
 if rules["combat"]:
     combatAlpha = rule_params["combat"]["alpha"]
 
-seed = settings["env"]["random_seed"] if isRandom else random.randrange(sys.maxsize)
+seed = settings["env"]["random_seed"] if not isRandom else random.randrange(sys.maxsize)
 
 random.seed(seed)
 
@@ -194,8 +195,6 @@ def ruleCheck():
             raise MissingRuleException("spice", "foresight")
         if rules["credit"]:
             raise MissingRuleException("spice", "credit")
-        if rules["inheritance"]:
-            raise MissingRuleException("spice", "inheritance")
 
 
 # Changes a hex color to RGB, as tkinter uses hex colors, but it's easier for me to work with RGB
@@ -231,7 +230,7 @@ def lightenColorByX(color, x, maxX):
 
 
 def initAgent(agent, tags, distribution):
-    if rules["tags"]:
+    if not randomlyDistributeAgents and rules["tags"]:
         newLocation = agent.getEnv().getRandomFreeLocation(distribution)
     else:
         newLocation = agent.getEnv().getRandomFreeLocation((0, gridSize[0] - 1, 0, gridSize[1] - 1))
@@ -350,6 +349,10 @@ def colorByNumberOfDiseases(agent):
     return lightenColorByX(colors["red"], agent.getNumAfflictedDiseases(), numDiseases)
 
 
+def colorByIsDiseased(agent):
+    return colors["red"] if agent.getNumAfflictedDiseases() > 0 else colors["blue"]
+
+
 # determine how to distribute agents on the screen
 def findDistribution(tags):
     getTribe = lambda x, y: round(float(bin(x).count('1')) / float(y))
@@ -456,7 +459,7 @@ class View:
     # Maps the agent color scheme number to which function determines the color of each agent
     agentColorSchemes = {0: colorAllRed, 1: colorBySex, 2: colorBySugarMetabolism, 3: colorByVision, 4: colorByGroup,
                          5: colorByAge, 6: colorByWealth,
-                         7: colorBySpiceMetabolism, 8: colorByNumberOfDiseases}
+                         7: colorBySpiceMetabolism, 8: colorByNumberOfDiseases, 9: colorByIsDiseased}
 
     # replace or remove agent, and determine if it's necessary to split wealth to children
     def removeAgent(self, agent):
@@ -881,6 +884,7 @@ class View:
         self.agentViewOptions.append("By Wealth")
         if rules["disease"]:
             self.agentViewOptions.append("By Number of Diseases")
+            self.agentViewOptions.append("By Is Diseased")
 
     def updateAgentView(self, *args):
         selectedView = self.lastSelectedAgentView.get()
@@ -902,6 +906,8 @@ class View:
             self.agentColorScheme = 7
         elif selectedView == "By Number of Diseases":
             self.agentColorScheme = 8
+        elif selectedView == "By Is Diseased":
+            self.agentColorScheme = 9
         self.draw()
 
     def updateGraphList(self, *args):
@@ -1424,7 +1430,6 @@ Main
 '''
 
 if __name__ == '__main__':
-
     ruleCheck()
 
     env = Environment(gridSize)

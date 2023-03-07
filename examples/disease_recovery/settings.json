@@ -53,9 +53,9 @@
     },
     "disease": {
       "immune_system_size": 50,
-      "disease_length": 12,
-      "num_diseases": 25,
-      "num_starting_diseases": 10
+      "disease_length": 8,
+      "num_diseases": 10,
+      "num_starting_diseases": 4
     },
     "pollution": {
       "A": 1,
