@@ -1186,7 +1186,7 @@ class View:
 
             for key, value in self.locationStats["agent"].items():
                 if key != "obj":
-                    self.locationStatsTextBox.insert(tk.END, key + ": " + str(value) + "\n")
+                    self.locationStatsTextBox.insert(tk.END, key + ": " + str(round(value, 2)) + "\n")
 
             self.locationStatsTextBox.configure(state='disabled')
 
