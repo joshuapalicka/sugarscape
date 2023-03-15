@@ -9,7 +9,6 @@ More info is available in the project wiki.
 
 Code based on previous work by Hervé Lange: https://github.com/langerv/sugarscape
 
-### Results
 
 ### Instructions
 Install Python 3: https://www.python.org.
@@ -17,6 +16,10 @@ Clone the repository.
 Our implementation requires matplotlib to run. You can install this library yourself, or through pip install -r requirements.txt.
 In command shell, execute: `python sugarscape.py`.  
 Edit `settings.json` for the wanted simulation, run again.
+
+### Example Run
+![t_100](https://user-images.githubusercontent.com/55159564/225454017-1f0a35f0-6d6a-4915-a54e-fb37e5e7f292.png)
+
 
 ### Reference
 - Schelling, Thomas C. (1978). Micromotives and Macrobehavior, Norton.
