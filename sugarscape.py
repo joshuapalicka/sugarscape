@@ -1434,6 +1434,8 @@ Main
 if __name__ == '__main__':
     ruleCheck()
 
+    print("Seed: ", seed)
+
     env = Environment(gridSize)
 
     # add radial food site 
