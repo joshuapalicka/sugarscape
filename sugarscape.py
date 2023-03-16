@@ -195,9 +195,11 @@ def ruleCheck():
             raise MissingRuleException("spice", "foresight")
         if rules["credit"]:
             raise MissingRuleException("spice", "credit")
+        if rules["inheritance"]:
+            raise MissingRuleException("spice", "inheritance")
 
 
-# Changes a hex color to RGB, as tkinter uses hex colors, but it's easier for me to work with RGB
+    # Changes a hex color to RGB, as tkinter uses hex colors, but it's easier for me to work with RGB
 def hexToRGB(colorHex):
     """ #FFFFFF -> (255, 255, 255) """
     colorHex = colorHex.lstrip('#')
